@@ -47,7 +47,30 @@ namespace CampusBenchApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutOrder(int id, Order order)
         {
-           
+             if (id != order.Id)
+        {
+            return BadRequest();
+        }
+
+        var orderItem = await _context.Orders.FindAsync(id);
+        if (orderItem == null)
+        {
+            return NotFound();
+        }
+
+        orderItem.Name = order.Name;
+            orderItem.Products = order.Products;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException) when (!OrderExists(id))
+        {
+            return NotFound();
+        }
+
+        return NoContent();
         }
 
         // POST: api/Order
@@ -55,7 +78,14 @@ namespace CampusBenchApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Order>> PostOrder(Order order)
         {
-           
+            var orderItem = new Order
+            {
+                Name = order.Name,
+            };
+            _context.Orders.Add(orderItem);
+            await _context.SaveChangesAsync();
+
+            return orderItem;
         }
 
         // DELETE: api/Order/5
